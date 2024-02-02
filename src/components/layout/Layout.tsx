@@ -2,11 +2,16 @@ import React from 'react'
 import EventListener from '../EventListener'
 import MainNavigation from './MainNavigation'
 
-const Layout: React.FC = (props: any) => {
+// Define a type for your component's props
+interface LayoutProps {
+  children: React.ReactNode; // Explicitly type the children prop
+}
+
+const Layout: React.FC<LayoutProps> = ({children}) => {
   return (
     <>
       <MainNavigation/>
-      <main>{props}</main>
+      <main>{children}</main>
       <EventListener/>
     </>
   )
