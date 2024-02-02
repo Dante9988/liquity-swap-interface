@@ -6,8 +6,8 @@ import Image from "next/image";
 const EthDropdown = (): JSX.Element => {
   return (
     <InputGroup.Text className={styles.inputGroupText}>
-      <Image src="/eth.png" alt="Eth" width={30} height={30}/>
-      &nbsp;&nbsp;ETH
+      <Image src="/ctc.png" alt="Ctc" width={30} height={30}/>
+      &nbsp;&nbsp;CTC
     </InputGroup.Text>
   );
 };

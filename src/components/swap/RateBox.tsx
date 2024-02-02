@@ -12,7 +12,7 @@ interface IProps {
 const RateBox: React.FC<IProps> = ({ onClickReload }) => {
   const { swapDirection, value, amount, tokenType } = useSelector(selectSwap);
 
-  const [fromTokenName, setFromTokenName] = useState<string>("ETH");
+  const [fromTokenName, setFromTokenName] = useState<string>("CTC");
   const [toTokenName, setToTokenName] = useState<string>("DAI");
   const [rate, setRate] = useState<string>("");
   const [show, setShow] = useState<boolean>(false);
@@ -24,12 +24,12 @@ const RateBox: React.FC<IProps> = ({ onClickReload }) => {
     }
     switch (swapDirection) {
       case "BuyToken":
-        setFromTokenName("ETH");
+        setFromTokenName("CTC");
         setToTokenName(tokenType.toUpperCase());
         break;
       case "SellToken":
         setFromTokenName(tokenType.toUpperCase());
-        setToTokenName("ETH");
+        setToTokenName("CTC");
         break;
     }
     setRate((amount / value).toFixed(6));

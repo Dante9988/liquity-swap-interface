@@ -4,10 +4,10 @@ import { checkSigner } from "../interactions/connectwallet";
 
 export type TokenType = "Dai" | "Link" | "Uni";
 
-export const daiAddr = "0x3Dada1665B380182bCb2Fd0EC5350aa642E30CF2";
-export const linkAddr = "0xab3361E094463A9E27368854210fA2E32Fd09a23";
-export const uniAddr = "0x66D44e4481AE436Bb635b741aA9161C4381E315F";
-export const dexAddr = "0xeeE74B877F1d8ab44a631661A7e0E5b081B453e0";
+export const daiAddr = "0x67956D9bdA07C65B8a0F2b1a5DB619E64DFA8dc0";
+export const linkAddr = "0x64e6321f4E1d8fB7cA989c92cA2ac87B9282f451";
+export const uniAddr = "0xF76b3D7EA97F468B322b6234963d077e069F3395";
+export const dexAddr = "0x8a21405Ed360fE38D5179Ea5A265E4AA3db4F24C";
 
 export const getTokenAddr = (tokenType: TokenType): string => {
   switch (tokenType) {

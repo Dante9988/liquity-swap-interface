@@ -1,11 +1,11 @@
 import Web3Modal from "web3modal";
 import WalletConnectProvider from "@walletconnect/web3-provider";
 
-export const networkId = 42;
+export const networkId = 102031;
 
 //This RPC URL came from Metamask (nothing sensitive)
 export const defaultRPCURL =
-  "https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161";
+  "https://rpc.cc3-testnet.creditcoin.network/";
 
 const providerOptions = {
   injected: {
@@ -15,11 +15,11 @@ const providerOptions = {
     package: WalletConnectProvider,
     options: {
       rpc: {
-        42: defaultRPCURL,
+        102031: defaultRPCURL,
       },
       pollingInterval: 15000,
       qrcode: true,
-      supportedChainIds: [42]
+      supportedChainIds: [102031]
     },
   },
 };
@@ -52,17 +52,17 @@ type TNetWorkData = {
 
 export const getNetworkData = (netId: number): TNetWorkData | undefined => {
   switch (netId) {
-    case 42: {
+    case 102031: {
       return {
-        chainId: "0x2A",
-        chainName: "Kovan",
+        chainId: "0x18E8F",
+        chainName: "CC3",
         rpcUrls: [defaultRPCURL],
         nativeCurrency: {
           name: "Ether",
-          symbol: "ETH",
+          symbol: "tCTC",
           decimals: 18,
         },
-        blockExplorerUrls: ["https://kovan.etherscan.io"],
+        blockExplorerUrls: ["https://creditcoin-testnet.blockscout.com/"],
       };
     }
     default:

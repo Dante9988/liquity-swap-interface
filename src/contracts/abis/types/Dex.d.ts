@@ -18,11 +18,12 @@ import {
 import { BytesLike } from "@ethersproject/bytes";
 import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
-import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
+import type { TypedEventFilter, TypedEvent, TypedListener } from "./common";
 
 interface DexInterface extends ethers.utils.Interface {
   functions: {
-    "addNewToken(address,address)": FunctionFragment;
+    "_prices(uint256)": FunctionFragment;
+    "addNewToken(address,uint256)": FunctionFragment;
     "buyToken(address)": FunctionFragment;
     "getPrice(address)": FunctionFragment;
     "owner()": FunctionFragment;
@@ -30,15 +31,20 @@ interface DexInterface extends ethers.utils.Interface {
     "renounceOwnership()": FunctionFragment;
     "sellToken(address,uint256)": FunctionFragment;
     "supportedTokenAddr(address)": FunctionFragment;
-    "tokenToPriceAddr(address)": FunctionFragment;
+    "tokenPrices(address)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
+    "updatePrice(address,uint256)": FunctionFragment;
     "withdrawEth(uint256)": FunctionFragment;
     "withdrawToken(address,uint256)": FunctionFragment;
   };
 
   encodeFunctionData(
+    functionFragment: "_prices",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "addNewToken",
-    values: [string, string]
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "buyToken", values: [string]): string;
   encodeFunctionData(functionFragment: "getPrice", values: [string]): string;
@@ -56,13 +62,14 @@ interface DexInterface extends ethers.utils.Interface {
     functionFragment: "supportedTokenAddr",
     values: [string]
   ): string;
-  encodeFunctionData(
-    functionFragment: "tokenToPriceAddr",
-    values: [string]
-  ): string;
+  encodeFunctionData(functionFragment: "tokenPrices", values: [string]): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "updatePrice",
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawEth",
@@ -73,6 +80,7 @@ interface DexInterface extends ethers.utils.Interface {
     values: [string, BigNumberish]
   ): string;
 
+  decodeFunctionResult(functionFragment: "_prices", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "addNewToken",
     data: BytesLike
@@ -94,11 +102,15 @@ interface DexInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "tokenToPriceAddr",
+    functionFragment: "tokenPrices",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "updatePrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -115,6 +127,7 @@ interface DexInterface extends ethers.utils.Interface {
     "BuyToken(address,address,uint256,uint256)": EventFragment;
     "Deposit(address,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
+    "PriceUpdated(address,uint256)": EventFragment;
     "RemoveToken(address)": EventFragment;
     "SellToken(address,address,uint256,uint256)": EventFragment;
     "Withdraw(address,uint256)": EventFragment;
@@ -124,10 +137,49 @@ interface DexInterface extends ethers.utils.Interface {
   getEvent(nameOrSignatureOrTopic: "BuyToken"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Deposit"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "PriceUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RemoveToken"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "SellToken"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Withdraw"): EventFragment;
 }
+
+export type AddNewTokenEvent = TypedEvent<[string] & { _tokenAddr: string }>;
+
+export type BuyTokenEvent = TypedEvent<
+  [string, string, BigNumber, BigNumber] & {
+    tokenAddr: string;
+    account: string;
+    amount: BigNumber;
+    cost: BigNumber;
+  }
+>;
+
+export type DepositEvent = TypedEvent<
+  [string, BigNumber] & { depositer: string; amount: BigNumber }
+>;
+
+export type OwnershipTransferredEvent = TypedEvent<
+  [string, string] & { previousOwner: string; newOwner: string }
+>;
+
+export type PriceUpdatedEvent = TypedEvent<
+  [string, BigNumber] & { tokenAddr: string; price: BigNumber }
+>;
+
+export type RemoveTokenEvent = TypedEvent<[string] & { _tokenAddr: string }>;
+
+export type SellTokenEvent = TypedEvent<
+  [string, string, BigNumber, BigNumber] & {
+    tokenAddr: string;
+    account: string;
+    amount: BigNumber;
+    cost: BigNumber;
+  }
+>;
+
+export type WithdrawEvent = TypedEvent<
+  [string, BigNumber] & { _tokenAddr: string; amount: BigNumber }
+>;
 
 export class Dex extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -173,9 +225,14 @@ export class Dex extends BaseContract {
   interface: DexInterface;
 
   functions: {
+    _prices(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     addNewToken(
       _tokenAddr: string,
-      _tokenPriceAddr: string,
+      _price: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -211,13 +268,16 @@ export class Dex extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    tokenToPriceAddr(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+    tokenPrices(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     transferOwnership(
       newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    updatePrice(
+      _tokenAddr: string,
+      _price: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -233,9 +293,11 @@ export class Dex extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
+  _prices(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
+
   addNewToken(
     _tokenAddr: string,
-    _tokenPriceAddr: string,
+    _price: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -265,10 +327,16 @@ export class Dex extends BaseContract {
 
   supportedTokenAddr(arg0: string, overrides?: CallOverrides): Promise<boolean>;
 
-  tokenToPriceAddr(arg0: string, overrides?: CallOverrides): Promise<string>;
+  tokenPrices(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   transferOwnership(
     newOwner: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  updatePrice(
+    _tokenAddr: string,
+    _price: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -284,9 +352,11 @@ export class Dex extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    _prices(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
+
     addNewToken(
       _tokenAddr: string,
-      _tokenPriceAddr: string,
+      _price: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -311,10 +381,16 @@ export class Dex extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    tokenToPriceAddr(arg0: string, overrides?: CallOverrides): Promise<string>;
+    tokenPrices(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     transferOwnership(
       newOwner: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    updatePrice(
+      _tokenAddr: string,
+      _price: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -331,9 +407,23 @@ export class Dex extends BaseContract {
   };
 
   filters: {
+    "AddNewToken(address)"(
+      _tokenAddr?: null
+    ): TypedEventFilter<[string], { _tokenAddr: string }>;
+
     AddNewToken(
       _tokenAddr?: null
     ): TypedEventFilter<[string], { _tokenAddr: string }>;
+
+    "BuyToken(address,address,uint256,uint256)"(
+      tokenAddr?: null,
+      account?: null,
+      amount?: null,
+      cost?: null
+    ): TypedEventFilter<
+      [string, string, BigNumber, BigNumber],
+      { tokenAddr: string; account: string; amount: BigNumber; cost: BigNumber }
+    >;
 
     BuyToken(
       tokenAddr?: null,
@@ -345,12 +435,28 @@ export class Dex extends BaseContract {
       { tokenAddr: string; account: string; amount: BigNumber; cost: BigNumber }
     >;
 
+    "Deposit(address,uint256)"(
+      depositer?: null,
+      amount?: null
+    ): TypedEventFilter<
+      [string, BigNumber],
+      { depositer: string; amount: BigNumber }
+    >;
+
     Deposit(
       depositer?: null,
       amount?: null
     ): TypedEventFilter<
       [string, BigNumber],
       { depositer: string; amount: BigNumber }
+    >;
+
+    "OwnershipTransferred(address,address)"(
+      previousOwner?: string | null,
+      newOwner?: string | null
+    ): TypedEventFilter<
+      [string, string],
+      { previousOwner: string; newOwner: string }
     >;
 
     OwnershipTransferred(
@@ -361,9 +467,39 @@ export class Dex extends BaseContract {
       { previousOwner: string; newOwner: string }
     >;
 
+    "PriceUpdated(address,uint256)"(
+      tokenAddr?: null,
+      price?: null
+    ): TypedEventFilter<
+      [string, BigNumber],
+      { tokenAddr: string; price: BigNumber }
+    >;
+
+    PriceUpdated(
+      tokenAddr?: null,
+      price?: null
+    ): TypedEventFilter<
+      [string, BigNumber],
+      { tokenAddr: string; price: BigNumber }
+    >;
+
+    "RemoveToken(address)"(
+      _tokenAddr?: null
+    ): TypedEventFilter<[string], { _tokenAddr: string }>;
+
     RemoveToken(
       _tokenAddr?: null
     ): TypedEventFilter<[string], { _tokenAddr: string }>;
+
+    "SellToken(address,address,uint256,uint256)"(
+      tokenAddr?: null,
+      account?: null,
+      amount?: null,
+      cost?: null
+    ): TypedEventFilter<
+      [string, string, BigNumber, BigNumber],
+      { tokenAddr: string; account: string; amount: BigNumber; cost: BigNumber }
+    >;
 
     SellToken(
       tokenAddr?: null,
@@ -373,6 +509,14 @@ export class Dex extends BaseContract {
     ): TypedEventFilter<
       [string, string, BigNumber, BigNumber],
       { tokenAddr: string; account: string; amount: BigNumber; cost: BigNumber }
+    >;
+
+    "Withdraw(address,uint256)"(
+      _tokenAddr?: null,
+      amount?: null
+    ): TypedEventFilter<
+      [string, BigNumber],
+      { _tokenAddr: string; amount: BigNumber }
     >;
 
     Withdraw(
@@ -385,9 +529,11 @@ export class Dex extends BaseContract {
   };
 
   estimateGas: {
+    _prices(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
+
     addNewToken(
       _tokenAddr: string,
-      _tokenPriceAddr: string,
+      _price: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -420,13 +566,16 @@ export class Dex extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    tokenToPriceAddr(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    tokenPrices(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     transferOwnership(
       newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    updatePrice(
+      _tokenAddr: string,
+      _price: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -443,9 +592,14 @@ export class Dex extends BaseContract {
   };
 
   populateTransaction: {
+    _prices(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     addNewToken(
       _tokenAddr: string,
-      _tokenPriceAddr: string,
+      _price: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -481,13 +635,19 @@ export class Dex extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    tokenToPriceAddr(
+    tokenPrices(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     transferOwnership(
       newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    updatePrice(
+      _tokenAddr: string,
+      _price: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

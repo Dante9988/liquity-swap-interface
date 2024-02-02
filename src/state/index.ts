@@ -10,7 +10,7 @@ const store = configureStore({
     swap,
     popup,
   },
-  middleware: [thunk],
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(/* other middleware here */),
 });
 
 export default store;
