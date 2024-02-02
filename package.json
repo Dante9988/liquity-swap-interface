@@ -9,6 +9,9 @@
     "lint": "next lint",
     "generate-types": "typechain --target=ethers-v5 --out-dir 'src/contracts/abis/types' 'src/contracts/abis/*.json'"
   },
+  "engines": {
+    "node": "21.6.1"
+  },
   "author": "AnvarXadja",
   "license": "MIT",
   "dependencies": {
