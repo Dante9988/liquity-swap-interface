@@ -10,7 +10,7 @@
     "generate-types": "typechain --target=ethers-v5 --out-dir 'src/contracts/abis/types' 'src/contracts/abis/*.json'"
   },
   "engines": {
-    "node": "18.18.2"
+    "node": "^18.18.2"
   },
   "author": "AnvarXadja",
   "license": "MIT",
